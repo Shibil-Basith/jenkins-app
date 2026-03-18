@@ -1,7 +1,602 @@
 <!DOCTYPE html>
-<html>
-<head><title>Jenkins CI/CD</title></head>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jenkins CI/CD — Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --sky: #f0f4ff;
+    --cloud: #ffffff;
+    --ink: #1a1f36;
+    --muted: #6b7280;
+    --blue: #4f7ef7;
+    --teal: #38c9b0;
+    --coral: #ff6b6b;
+    --amber: #fbbf24;
+    --soft-blue: #dbeafe;
+    --soft-teal: #ccfbf1;
+    --soft-coral: #ffe4e4;
+    --soft-amber: #fef3c7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sky);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── floating background blobs ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #c7d9ff88 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #b2f5ea66 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 3rem;
+    background: rgba(240,244,255,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(79,126,247,0.1);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.2rem;
+    color: var(--blue);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .logo-dot { width: 10px; height: 10px; background: var(--teal); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.6} }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--blue); }
+
+  /* ── hero ── */
+  .hero {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 4rem;
+    padding: 6rem 3rem 4rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--soft-teal); color: #0f766e;
+    font-size: 0.78rem; font-weight: 600;
+    padding: 0.35rem 0.9rem; border-radius: 999px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #99f6e4;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -0.03em;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+  .hero h1 span { color: var(--blue); }
+  .hero p {
+    margin-top: 1.2rem;
+    font-size: 1.05rem; color: var(--muted); line-height: 1.7;
+    max-width: 480px;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; margin-top: 2rem;
+    animation: fadeUp 0.6s ease 0.3s both;
+  }
+  .btn-primary {
+    background: var(--blue); color: white;
+    padding: 0.75rem 1.8rem; border-radius: 12px;
+    font-weight: 600; font-size: 0.95rem;
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(79,126,247,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,126,247,0.45); }
+  .btn-ghost {
+    background: white; color: var(--ink);
+    padding: 0.75rem 1.8rem; border-radius: 12px;
+    font-weight: 500; font-size: 0.95rem;
+    border: 1px solid rgba(0,0,0,0.1); cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none; display: inline-block;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .btn-ghost:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── 3D pipeline illustration ── */
+  .hero-illustration {
+    display: flex; justify-content: center; align-items: center;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+  .pipeline-3d {
+    display: flex; flex-direction: column; gap: 0.8rem;
+    width: 100%; max-width: 420px;
+  }
+  .pipe-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem 1.4rem;
+    display: flex; align-items: center; gap: 1rem;
+    box-shadow: 0 4px 0 0 rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+    border: 1px solid rgba(255,255,255,0.9);
+    transform: perspective(600px) rotateY(-4deg) rotateX(2deg);
+    transition: transform 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .pipe-card:hover { transform: perspective(600px) rotateY(0deg) rotateX(0deg) translateY(-2px); }
+  .pipe-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; border-radius: 4px 0 0 4px;
+  }
+  .pipe-card.c1::before { background: var(--blue); }
+  .pipe-card.c2::before { background: var(--teal); }
+  .pipe-card.c3::before { background: var(--amber); }
+  .pipe-card.c4::before { background: var(--coral); }
+  .pipe-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .pipe-card.c1 .pipe-icon { background: var(--soft-blue); }
+  .pipe-card.c2 .pipe-icon { background: var(--soft-teal); }
+  .pipe-card.c3 .pipe-icon { background: var(--soft-amber); }
+  .pipe-card.c4 .pipe-icon { background: var(--soft-coral); }
+  .pipe-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+  .pipe-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+  .pipe-status {
+    margin-left: auto; font-size: 0.72rem; font-weight: 600;
+    padding: 0.25rem 0.65rem; border-radius: 999px;
+  }
+  .status-ok { background: var(--soft-teal); color: #0f766e; }
+  .status-run { background: var(--soft-amber); color: #92400e; }
+  .pipe-connector {
+    display: flex; justify-content: center; align-items: center;
+    height: 12px;
+  }
+  .pipe-connector::after {
+    content: ''; display: block;
+    width: 2px; height: 100%;
+    background: linear-gradient(to bottom, rgba(79,126,247,0.3), rgba(56,201,176,0.3));
+  }
+  .pipe-card { animation: slideIn 0.5s ease both; }
+  .pipe-card:nth-child(1) { animation-delay: 0.4s; }
+  .pipe-card:nth-child(3) { animation-delay: 0.55s; }
+  .pipe-card:nth-child(5) { animation-delay: 0.7s; }
+  .pipe-card:nth-child(7) { animation-delay: 0.85s; }
+  @keyframes slideIn { from{opacity:0;transform:perspective(600px) rotateY(-20deg) translateX(30px)} to{opacity:1;transform:perspective(600px) rotateY(-4deg) rotateX(2deg)} }
+
+  /* ── stats strip ── */
+  .stats {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 2rem;
+    flex-wrap: wrap;
+    padding: 2rem 3rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px; padding: 1.5rem 2rem;
+    text-align: center; flex: 1; min-width: 150px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.05), 0 8px 20px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.9);
+    animation: fadeUp 0.6s ease both;
+  }
+  .stat-card:nth-child(1){animation-delay:0.3s}
+  .stat-card:nth-child(2){animation-delay:0.4s}
+  .stat-card:nth-child(3){animation-delay:0.5s}
+  .stat-card:nth-child(4){animation-delay:0.6s}
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; font-weight: 500; }
+
+  /* ── features ── */
+  .section {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 4rem auto;
+    padding: 0 3rem;
+  }
+  .section-tag {
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 800; line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 2.5rem;
+  }
+  .feature-card {
+    background: white; border-radius: 20px;
+    padding: 1.8rem; position: relative; overflow: hidden;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.05), 0 10px 28px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.9);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.08);
+  }
+  .feature-card::after {
+    content: ''; position: absolute;
+    bottom: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%; opacity: 0.08;
+  }
+  .feature-card.f1::after { background: var(--blue); }
+  .feature-card.f2::after { background: var(--teal); }
+  .feature-card.f3::after { background: var(--coral); }
+  .feature-card.f4::after { background: var(--amber); }
+  .feature-card.f5::after { background: var(--blue); }
+  .feature-card.f6::after { background: var(--teal); }
+  .feat-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 1.2rem;
+  }
+  .f1 .feat-icon { background: var(--soft-blue); }
+  .f2 .feat-icon { background: var(--soft-teal); }
+  .f3 .feat-icon { background: var(--soft-coral); }
+  .f4 .feat-icon { background: var(--soft-amber); }
+  .f5 .feat-icon { background: var(--soft-blue); }
+  .f6 .feat-icon { background: var(--soft-teal); }
+  .feat-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+  .feat-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── pipeline flow section ── */
+  .flow-section {
+    position: relative; z-index: 1;
+    background: white;
+    margin: 4rem 0; padding: 4rem 3rem;
+    box-shadow: 0 -1px 0 rgba(0,0,0,0.05), 0 1px 0 rgba(0,0,0,0.05);
+  }
+  .flow-inner { max-width: 1200px; margin: 0 auto; }
+  .flow-steps {
+    display: flex; align-items: center; gap: 0;
+    margin-top: 3rem; flex-wrap: wrap; justify-content: center;
+  }
+  .flow-step {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; flex: 1; min-width: 120px;
+  }
+  .flow-bubble {
+    width: 64px; height: 64px; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+    transition: transform 0.3s;
+  }
+  .flow-step:hover .flow-bubble { transform: translateY(-4px) scale(1.05); }
+  .flow-bubble.b1 { background: var(--soft-blue); }
+  .flow-bubble.b2 { background: var(--soft-teal); }
+  .flow-bubble.b3 { background: var(--soft-amber); }
+  .flow-bubble.b4 { background: var(--soft-coral); }
+  .flow-bubble.b5 { background: #ede9fe; }
+  .flow-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; }
+  .flow-desc { font-size: 0.76rem; color: var(--muted); margin-top: 0.3rem; line-height: 1.4; max-width: 100px; }
+  .flow-arrow {
+    font-size: 1.2rem; color: #d1d5db; flex-shrink: 0;
+    margin: 0 0.5rem; margin-bottom: 2.5rem;
+  }
+
+  /* ── terminal block ── */
+  .terminal-section {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 4rem auto;
+    padding: 0 3rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+  }
+  .terminal {
+    background: #1e2235; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.1), 0 20px 50px rgba(0,0,0,0.15);
+  }
+  .term-bar {
+    background: #2a2f4a; padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot.r { background: #ff5f57; }
+  .term-dot.y { background: #febc2e; }
+  .term-dot.g { background: #28c840; }
+  .term-title { font-size: 0.75rem; color: #6b7280; margin-left: auto; font-family: monospace; }
+  .term-body { padding: 1.5rem; font-family: monospace; font-size: 0.82rem; line-height: 1.8; }
+  .term-line { display: flex; gap: 0.75rem; }
+  .term-prompt { color: #38c9b0; }
+  .term-cmd { color: #e2e8f0; }
+  .term-out { color: #6b7280; padding-left: 1.5rem; }
+  .term-success { color: #28c840; padding-left: 1.5rem; }
+  .term-cursor { display: inline-block; width: 8px; height: 14px; background: #4f7ef7; animation: blink 1s infinite; vertical-align: middle; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .terminal-text .section-title { margin-bottom: 1rem; }
+  .terminal-text p { color: var(--muted); line-height: 1.7; font-size: 0.95rem; margin-bottom: 1rem; }
+  .check-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.5rem; }
+  .check-list li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--ink); }
+  .check-list li::before { content: '✓'; width: 22px; height: 22px; background: var(--soft-teal); color: #0f766e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+
+  /* ── footer ── */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center; padding: 3rem;
+    color: var(--muted); font-size: 0.85rem;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  footer strong { color: var(--blue); font-weight: 600; }
+
+  /* ── live badge ── */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #dcfce7; color: #15803d;
+    font-size: 0.72rem; font-weight: 700;
+    padding: 0.3rem 0.8rem; border-radius: 999px;
+    border: 1px solid #bbf7d0; margin-left: 1rem;
+  }
+  .live-dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+  @media(max-width:900px){
+    .hero { grid-template-columns: 1fr; padding: 3rem 1.5rem; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .terminal-section { grid-template-columns: 1fr; padding: 0 1.5rem; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .section { padding: 0 1.5rem; }
+    .flow-section { padding: 3rem 1.5rem; }
+  }
+  @media(max-width:600px){
+    .features-grid { grid-template-columns: 1fr; }
+    .flow-steps { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); margin: 0; }
+    .stats { padding: 1rem 1.5rem; }
+  }
+</style>
+</head>
 <body>
-  <h1>Hello from Jenkins CI/CD on RHEL 9!</h1>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    Jenkins CI/CD
+  </div>
+  <ul class="nav-links">
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#stack">Stack</a></li>
+  </ul>
+  <span class="live-badge"><span class="live-dot"></span>Live on RHEL 9</span>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-badge">🚀 Automated Deployment Active</div>
+    <h1>Code to <span>Production</span><br/>in Seconds</h1>
+    <p>Every git push automatically triggers build, test, and deployment via Jenkins on AWS EC2 — zero manual steps, full reliability.</p>
+    <div class="hero-actions">
+      <a href="#pipeline" class="btn-primary">View Pipeline</a>
+      <a href="#stack" class="btn-ghost">Tech Stack</a>
+    </div>
+  </div>
+  <div class="hero-illustration">
+    <div class="pipeline-3d">
+      <div class="pipe-card c1">
+        <div class="pipe-icon">📝</div>
+        <div>
+          <div class="pipe-label">Code Push</div>
+          <div class="pipe-sub">git push → GitHub</div>
+        </div>
+        <span class="pipe-status status-ok">Done</span>
+      </div>
+      <div class="pipe-connector"></div>
+      <div class="pipe-card c2">
+        <div class="pipe-icon">🔗</div>
+        <div>
+          <div class="pipe-label">Webhook</div>
+          <div class="pipe-sub">GitHub → Jenkins</div>
+        </div>
+        <span class="pipe-status status-ok">Done</span>
+      </div>
+      <div class="pipe-connector"></div>
+      <div class="pipe-card c3">
+        <div class="pipe-icon">⚙️</div>
+        <div>
+          <div class="pipe-label">Build & Test</div>
+          <div class="pipe-sub">Jenkinsfile runs</div>
+        </div>
+        <span class="pipe-status status-ok">Done</span>
+      </div>
+      <div class="pipe-connector"></div>
+      <div class="pipe-card c4">
+        <div class="pipe-icon">🌐</div>
+        <div>
+          <div class="pipe-label">Deploy</div>
+          <div class="pipe-sub">Apache serves app</div>
+        </div>
+        <span class="pipe-status status-run">Live</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Automated deploys</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">0</div>
+    <div class="stat-label">Manual steps</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">EC2</div>
+    <div class="stat-label">AWS hosted</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">RHEL 9</div>
+    <div class="stat-label">Production OS</div>
+  </div>
+</div>
+
+<!-- PIPELINE FLOW -->
+<section class="flow-section" id="pipeline">
+  <div class="flow-inner">
+    <div class="section-tag">How it works</div>
+    <div class="section-title">The Deployment Pipeline</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-bubble b1">👨‍💻</div>
+        <div class="flow-name">Developer</div>
+        <div class="flow-desc">Writes code, pushes to GitHub</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-bubble b2">🔔</div>
+        <div class="flow-name">Webhook</div>
+        <div class="flow-desc">GitHub notifies Jenkins instantly</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-bubble b3">🏗️</div>
+        <div class="flow-name">Jenkins</div>
+        <div class="flow-desc">Runs Jenkinsfile pipeline</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-bubble b4">✅</div>
+        <div class="flow-name">Test</div>
+        <div class="flow-desc">Validates before deploy</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-bubble b5">🚀</div>
+        <div class="flow-name">Live</div>
+        <div class="flow-desc">Apache serves updated app</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-tag">Why this setup</div>
+  <div class="section-title">Built for reliability</div>
+  <div class="features-grid">
+    <div class="feature-card f1">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Instant Deploys</div>
+      <div class="feat-desc">Every push to main branch triggers an automatic deployment — no waiting, no manual commands.</div>
+    </div>
+    <div class="feature-card f2">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-title">RHEL 9 Security</div>
+      <div class="feat-desc">Running on Red Hat Enterprise Linux 9 with SELinux, firewalld, and enterprise-grade hardening.</div>
+    </div>
+    <div class="feature-card f3">
+      <div class="feat-icon">☁️</div>
+      <div class="feat-title">AWS EC2</div>
+      <div class="feat-desc">Hosted on Amazon EC2 for scalable, reliable cloud infrastructure with full control.</div>
+    </div>
+    <div class="feature-card f4">
+      <div class="feat-icon">📋</div>
+      <div class="feat-title">Pipeline as Code</div>
+      <div class="feat-desc">The entire deployment pipeline lives in a Jenkinsfile inside the repo — version controlled and auditable.</div>
+    </div>
+    <div class="feature-card f5">
+      <div class="feat-icon">🌐</div>
+      <div class="feat-title">Apache Serving</div>
+      <div class="feat-desc">Apache httpd serves the application on port 80, managed and restarted automatically by Jenkins.</div>
+    </div>
+    <div class="feature-card f6">
+      <div class="feat-icon">🔄</div>
+      <div class="feat-title">Zero Downtime</div>
+      <div class="feat-desc">Failed builds never reach production — the pipeline stops and Apache keeps serving the last good version.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TERMINAL -->
+<section class="terminal-section" id="stack">
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dot r"></div>
+      <div class="term-dot y"></div>
+      <div class="term-dot g"></div>
+      <span class="term-title">Jenkins Console Output</span>
+    </div>
+    <div class="term-body">
+      <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd">git push origin main</span></div>
+      <div class="term-out">Enumerating objects: 5, done.</div>
+      <div class="term-out">Writing objects: 100% (3/3), done.</div>
+      <div class="term-out">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">[Jenkins]</span><span class="term-cmd">Pipeline started</span></div>
+      <div class="term-out">Stage: Checkout SCM ✓</div>
+      <div class="term-out">Stage: Test ✓</div>
+      <div class="term-out">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">[Deploy]</span><span class="term-cmd">Copying files...</span></div>
+      <div class="term-out">sudo cp -r /home/ec2-user/jenkins/. /var/www/html/</div>
+      <div class="term-out">sudo systemctl restart httpd</div>
+      <div class="term-success">✓ Deployed successfully!</div>
+      <div class="term-out">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"><span class="term-cursor"></span></span></div>
+    </div>
+  </div>
+  <div class="terminal-text">
+    <div class="section-tag">Tech stack</div>
+    <div class="section-title">Simple. Solid. Production-ready.</div>
+    <p>This entire CI/CD pipeline runs on a single AWS EC2 instance — no Kubernetes, no Docker, no over-engineering. Just the essentials that work.</p>
+    <ul class="check-list">
+      <li>Jenkins — pipeline orchestration</li>
+      <li>GitHub — source control + webhooks</li>
+      <li>Apache httpd — web server</li>
+      <li>AWS EC2 — cloud hosting</li>
+      <li>RHEL 9 — enterprise Linux OS</li>
+      <li>Jenkinsfile — pipeline as code</li>
+    </ul>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Deployed automatically by <strong>Jenkins CI/CD</strong> on AWS EC2 &nbsp;·&nbsp; RHEL 9 &nbsp;·&nbsp; Apache httpd
+</footer>
+
 </body>
 </html>
