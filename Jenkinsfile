@@ -9,10 +9,16 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Setup') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Shibil-Basith/jenkins-app.git'
+                sh '''
+                    if ! command -v node &> /dev/null; then
+                        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+                        sudo dnf install nodejs -y
+                    else
+                        echo "Node.js already installed: $(node -v)"
+                    fi
+                '''
             }
         }
 
