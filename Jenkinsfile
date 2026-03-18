@@ -12,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/your-org/your-app.git'
+                    url: 'https://github.com/Shibil-Basith/jenkins-app.git'
             }
         }
 
