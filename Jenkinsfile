@@ -3,45 +3,16 @@ pipeline {
 
     environment {
         APP_SERVER = 'ec2-user@3.108.40.188'
-        DEPLOY_DIR = '/home/ec2-user/myapp'
         SSH_KEY    = '/var/lib/jenkins/.ssh/app-key'
     }
 
     stages {
 
-        stage('Setup') {
-            steps {
-                sh '''
-                    if ! command -v node &> /dev/null; then
-                        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-                        sudo dnf install nodejs -y
-                    else
-                        echo "Node.js already installed: $(node -v)"
-                    fi
-                '''
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'npm install'
-                sh 'npm run build'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'npm test'
-            }
-        }
-
         stage('Deploy') {
             steps {
-                sh "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${APP_SERVER} 'mkdir -p ${DEPLOY_DIR}'"
-                sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no -r dist/* ${APP_SERVER}:${DEPLOY_DIR}/"
                 sh """
                     ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${APP_SERVER} \
-                    'pm2 restart myapp || pm2 start ${DEPLOY_DIR}/index.js --name myapp && pm2 save'
+                    'sudo cp -r /home/ec2-user/jenkins/* /var/www/html/ && sudo systemctl restart httpd'
                 """
             }
         }
@@ -49,6 +20,6 @@ pipeline {
 
     post {
         success { echo 'Deployed successfully!' }
-        failure  { echo 'Build failed — not deployed.' }
+        failure  { echo 'Deploy failed.' }
     }
 }
